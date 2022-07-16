@@ -98,8 +98,8 @@ GraphicUI::GraphicUI(int FrameWidth, int FrameHeight, std::shared_ptr<UIData> Fr
 	LoadDivGraphEx(frameData->pass, frameData->allNum, frameData->widthNum, frameData->heightNum,
 		frameData->xSize, frameData->ySize);
 }
-
-GraphicUI::GraphicUI(std::string Pass, int CenterX, int CenterY)
+//ˆø‚«L‚Î‚³‚È‚¢ê‡‚Í‚±‚Á‚¿‚Å¶¬‚·‚é
+GraphicUI::GraphicUI(std::string Pass, float CenterX, float CenterY)
 {
 	gManager = GameManager::Instance();
 	buttonGh = gManager->LoadGraphEx(Pass);
@@ -151,6 +151,7 @@ void GraphicUI::ReLoadGraphic(std::string Pass)
 
 void GraphicUI::DrawFrame()
 {
+	//•ªŠ„‰æ‘œ‚Å‚Í‚È‚¢ê‡‚Í‚»‚Ì‚Ü‚Ü•`‰æ‚·‚é
 	if (frameGh.empty()) {
 		DrawRotaGraph(centerPos.x, centerPos.y, 1, 0, buttonGh, true);
 		return;

@@ -41,7 +41,7 @@ public:
 
 	//リソース画像の再読み込み(実行画面中のボタンに仕込む 普段はこちらでリロードする)
 		//指定したフォルダの中の全ての画像を読み込む
-	void ReLoadResource();
+	void LoadFileResource();
 
 
 private:
@@ -56,6 +56,13 @@ private:
 
 	//リソース画像の配列
 	std::vector<std::shared_ptr<Graphic>>resources;
+
+	//ロード時の拡大ありなし
+	enum class LOADMODE :uint32_t {
+		SPLIT,
+		NORMAL,
+		MAX
+	};
 
 	//--------------UIの拡大処理関係--------------------//
 
@@ -77,29 +84,73 @@ private:
 		//クリックするごとに0->1->2->0->...の順で循環する　
 		nowMode = (nowMode + 1) % static_cast<uint32_t>(EDITMODE::MAX);
 	}
-
 	//--------------------------------------------------//
 
 	//----------エディター本体のシステムUI----------//
 
 	//左端に置くUI見本の背景フレーム
-	GraphicUI* resourcesFrame = nullptr;
+	//GraphicUI* resourcesFrame = nullptr;
+	std::shared_ptr<GraphicUI> resourcesFrame = nullptr;
 	//現在のUIをcsvとして出力するボタン
-	GraphicUI* saveButton = nullptr;
+	std::shared_ptr<GraphicUI> saveButton = nullptr;
 	//現在の画面のUIを全てリセットするボタン
-	GraphicUI* resetButton = nullptr;
+	std::shared_ptr<GraphicUI> resetButton = nullptr;
 	//特定の名前のcsvからUIをロードし表示するボタン
-	GraphicUI* loadButton = nullptr;
+	std::shared_ptr<GraphicUI> loadButton = nullptr;
 
 	//拡大モードの変更ボタン
-	GraphicUI* modeChangeButton = nullptr;
+	std::shared_ptr<GraphicUI> modeChangeButton = nullptr;
+
+	//システムUIのボタン配列
+	std::vector<std::shared_ptr<GraphicUI>>SystemButtons;
+	//システムUI
+	enum class SYSTEMUI :uint32_t {
+		SAVE,
+		RESET,
+		LOAD,
+		CHANGE,
+		MAX
+	};
+
+	//システムUIとのクリック判定関数
+	//saveボタン
+	void SaveUIButton();
+	//resetボタン
+	void ResetUIButton();
+	//loadボタン
+	void LoadUIButton();
+	//changeボタン
+	void ModeChangeButton();
+
+	//---------アウトプット用-------------//
+	//出力用整形済み文字列配列
+	std::vector<std::string> UIText;
+	
+	//出力用の文字列型にデータを整形する関数
+	void UiToString();
+	//出力関数 カンマ区切りのデータで出力
+	void UiOutput();
+	//--------------------------------------//
+
+	//ボタンが押されたときに実行する関数の配列
+	const std::function< void(UIEditor*) > BUTTONCLICK[4] = { &UIEditor::SaveUIButton,&UIEditor::ResetUIButton
+															,&UIEditor::LoadUIButton,&UIEditor::ModeChangeButton };
+	//------------------------------------------------//
+
+	//----------UIEditorのリソース関係の関数----------//
 
 	//リソース画像の読み込み(パス経由 コードでの暫定的なデバッグに使用)
-	void LoadResourceGraphic(std::string Pass,int Width,int Height);
+	void LoadResourceGraphic(std::string Pass, int Width, int Height);
 
-	////リソース画像の再読み込み(実行画面中のボタンに仕込む 普段はこちらでリロードする)
-	////指定したフォルダの中の全ての画像を読み込む
-	//void ReLoadResource();
+	//debugのためpublicに移動
+	/*
+	//リソース画像の再読み込み(実行画面中のボタンに仕込む 普段はこちらでリロードする)
+	//指定したフォルダの中の全ての画像を読み込む
+	void LoadFileResource();
+	*/
+
+	//指定フォルダの相対パス(slnファイルが有る場所からのパス)
+	const std::string LOADFILEPASS = "graphics\\UI\\*.png";
 
 	//初回リソース画像読み込み(基本UIの枠のみ必ず読み込む)
 	void LoadDefaultResource();

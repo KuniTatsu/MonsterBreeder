@@ -11,7 +11,7 @@ class GameManager;
 class Graphic {
 
 public:
-	//ghを使用した生成 幅と高さはデフォルト引数を入れているが多分使わない
+	//ghを使用した生成 幅と高さはデフォルト引数で100に指定(extendGraphを使うため)
 	Graphic(tnl::Vector3 Pos, int Gh, int Width = 100, int Height = 100);
 	//ファイルパスを使用した生成
 	Graphic(tnl::Vector3 Pos, std::string Pass, int Width, int Height);

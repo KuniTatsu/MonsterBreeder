@@ -17,7 +17,7 @@ public:
 	//フレーム内に画像が無い場合(フレームのみの描画)
 	GraphicUI(int FrameWidth, int FrameHeight, std::shared_ptr<UIData>FrameData);
 	//フレームを引き伸ばさない場合
-	GraphicUI(std::string Pass, int CenterX, int CenterY);
+	GraphicUI(std::string Pass, float CenterX, float CenterY);
 
 
 	~GraphicUI();

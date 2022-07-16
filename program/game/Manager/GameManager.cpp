@@ -87,7 +87,7 @@ void GameManager::initGameManager()
 	editor->Init();
 	editor->LoadUI("Csv/UI/SaveUI.csv");
 
-	editor->ReLoadResource();
+//	editor->LoadFileResource();
 
 }
 

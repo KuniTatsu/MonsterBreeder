@@ -24,27 +24,31 @@ void UIEditor::Init()
 	//リソースグラフィック欄の背景生成
 	{
 		auto data = std::make_shared<UIData>("graphics/FrameBlack.png", 9, 3, 3, 16, 16, 0.0f, 0.0f);
-		resourcesFrame = new GraphicUI(300, 768, data);
+		resourcesFrame = std::make_shared<GraphicUI>(300, 768, data);
 	}
 	//出力ボタンの生成
 	{
 		//auto data = std::make_shared<UIData>("graphics/FrameBlack.png", 9, 3, 3, 16, 16, 900.0f, 0.0f);
-		saveButton = new GraphicUI("graphics/UIEditor/SaveButton.png", 950, 100);
+		saveButton = std::make_shared<GraphicUI>("graphics/UIEditor/SaveButton.png", 950.0f, 100.0f);
+		SystemButtons.emplace_back(saveButton);
 	}
 	//リセット/全消去ボタンの生成
 	{
 		//auto data = std::make_shared<UIData>("graphics/FrameBlack.png", 9, 3, 3, 16, 16, 900.0f, 110.0f);
-		resetButton = new GraphicUI("graphics/UIEditor/ResetButton.png", 950, 210);
+		resetButton = std::make_shared<GraphicUI>("graphics/UIEditor/ResetButton.png", 950.0f, 210.0f);
+		SystemButtons.emplace_back(resetButton);
 	}
 	//ロードボタンの生成
 	{
 		//auto data = std::make_shared<UIData>("graphics/FrameBlack.png", 9, 3, 3, 16, 16, 900.0f, 220.0f);
-		loadButton = new GraphicUI("graphics/UIEditor/LoadButton.png", 950, 320);
+		loadButton = std::make_shared<GraphicUI>("graphics/UIEditor/LoadButton.png", 950.0f, 320.0f);
+		SystemButtons.emplace_back(loadButton);
 	}
 	//モード変更ボタンの生成
 	{
 		//auto data = std::make_shared<UIData>("graphics/ModeNoEdit.png", 9, 3, 3, 16, 16, 900, 330);
-		modeChangeButton = new GraphicUI("graphics/UIEditor/ModeNoEdit.png", 950, 430);
+		modeChangeButton = std::make_shared<GraphicUI>("graphics/UIEditor/ModeNoEdit.png", 950.0f, 430.0f);
+		SystemButtons.emplace_back(modeChangeButton);
 	}
 }
 
@@ -64,7 +68,25 @@ void UIEditor::Draw()
 	//現在のシークエンスの間のみ描画したい内容の描画
 	DRAWSEQUENCE[static_cast<uint32_t>(nowSequence)](this);
 }
-
+void UIEditor::SaveUIButton()
+{
+}
+void UIEditor::ResetUIButton()
+{
+}
+void UIEditor::LoadUIButton()
+{
+}
+void UIEditor::ModeChangeButton()
+{
+}
+void UIEditor::UiToString()
+{
+}
+void UIEditor::UiOutput()
+{
+}
+//画像パスから新しい画像リソースをロードする
 void UIEditor::LoadResourceGraphic(std::string Pass, int Width, int Height)
 {
 
@@ -77,8 +99,8 @@ void UIEditor::LoadResourceGraphic(std::string Pass, int Width, int Height)
 	resources.emplace_back(resource);
 
 }
-
-void UIEditor::ReLoadResource()
+//特定のフォルダの中にある特定の拡張子の画像を読み込む
+void UIEditor::LoadFileResource()
 {
 	//リソースの配列を空にする
 	resources.clear();
@@ -92,7 +114,7 @@ void UIEditor::ReLoadResource()
 	//検索開始　フォルダ内の最初のファイルの情報を取得
 	//フォルダ内の.png形式の画像のみを検索する
 	//第一引数にフォルダの実行ファイルからの相対パスを入れる
-	FindHandle = FileRead_findFirst("graphics\\UI\\*.png", &info);
+	FindHandle = FileRead_findFirst(LOADFILEPASS.c_str(), &info);
 
 	//もし最初のファイルが見つかったら走る処理
 	if (FindHandle != (DWORD_PTR)-1)
@@ -177,18 +199,15 @@ bool UIEditor::SeqEdit(const float DeltaTime)
 
 void UIEditor::DrawSelectSequence()
 {
-
-
 	//リソースの表示
 	//背景
 	resourcesFrame->Draw();
 	DrawResource();
 
 	//セーブ、リセット、ロード、モード変更ボタンの表示
-	saveButton->Draw();
-	resetButton->Draw();
-	loadButton->Draw();
-	modeChangeButton->Draw();
+	for (auto &button : SystemButtons) {
+		button->Draw();
+	}
 }
 
 void UIEditor::DrawPlaceSequence()
@@ -198,32 +217,56 @@ void UIEditor::DrawPlaceSequence()
 void UIEditor::DrawEditSequence()
 {
 }
-
+//CsvデータからUIをロードする関数 データの並び順を合わせること
 void UIEditor::LoadUI(std::string Pass)
 {
+	//画面内の全てのUIを消去する
+	makedUI.clear();
+
+	//CSV読み込み
 	auto loadUICsv = tnl::LoadCsv(Pass);
 
+	//1行目からスタート(0行目は項目名)
 	for (int i = 1; i < loadUICsv.size(); ++i) {
 
+		//------string型のデータをint型とfloat型に変換し、ローカル変数に保管する処理----//
+		//type 0:分割ロード,1:そのままロード
+		int type = stoi(loadUICsv[i][2]);
 
-		int allNum = stoi(loadUICsv[i][2]);
-		int widthNum = stoi(loadUICsv[i][3]);
-		int heightNum = stoi(loadUICsv[i][4]);
-		int widthSize = stoi(loadUICsv[i][5]);
-		int heightSize = stoi(loadUICsv[i][6]);
+		int allNum = stoi(loadUICsv[i][3]);
+		int widthNum = stoi(loadUICsv[i][4]);
+		int heightNum = stoi(loadUICsv[i][5]);
+		int widthSize = stoi(loadUICsv[i][6]);
+		int heightSize = stoi(loadUICsv[i][7]);
 
-		float posX = stof(loadUICsv[i][7]);
-		float posY = stof(loadUICsv[i][8]);
+		float posX = stof(loadUICsv[i][8]);
+		float posY = stof(loadUICsv[i][9]);
 
-		int frameWidth = stoi(loadUICsv[i][9]);
-		int frameHeight = stoi(loadUICsv[i][10]);
+		int frameWidth = stoi(loadUICsv[i][10]);
+		int frameHeight = stoi(loadUICsv[i][11]);
+
+		//------------------------------------------------------------------------------//
+
+		//画像を引き伸ばさずに使うUIの場合
+		if (type == static_cast<uint32_t>(LOADMODE::NORMAL)) {
+
+			float centerX = posX + (widthSize / 2);
+			float centerY = posY + (heightSize / 2);
+
+			//GraphicUIクラスを生成(画像を拡大せずに使う場合)
+			auto newUI = std::make_shared<GraphicUI>(loadUICsv[i][1], centerX, centerY);
+			//vectorに登録
+			makedUI.emplace_back(newUI);
+			//次のループへ
+			continue;
+		}
 
 
 		//UIDataクラスを生成
 		auto data = std::make_shared<UIData>(loadUICsv[i][1], allNum, widthNum, heightNum, widthSize, heightSize, posX, posY);
 
 		if (loadUICsv[i][11] == "") {
-			//GraphicUIクラスを生成(枠の中に画像がない場合
+			//GraphicUIクラスを生成(枠の中に画像がない場合)
 			auto newUI = std::make_shared<GraphicUI>(frameWidth, frameHeight, data);
 
 			//vectorに登録
