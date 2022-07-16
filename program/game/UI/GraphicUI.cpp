@@ -1,43 +1,14 @@
 #include "GraphicUI.h"
 #include"../Manager/GameManager.h"
 
-//GraphicUI::GraphicUI(tnl::Vector3 Pos, int FrameWidth, int FrameHeight, std::string UIGh, std::shared_ptr<UIData>UIData)
-//{
-//	gManager = GameManager::Instance();
-//
-//	//枠のUIデータの代入
-//	frameData = UIData;
-//
-//	//UIの左上の描画座標
-//	pos = Pos;
-//
-//	//UI元画像の横幅取得
-//	width = FrameWidth;
-//
-//	//UI元画像の縦幅取得
-//	height = FrameHeight;
-//
-//	//3分割した長さを取得
-//	splitLength = frameData->xSize;
-//
-//	//中心座標を取得
-//	centerPos = tnl::Vector3(pos.x + (width >> 1), pos.y + (height >> 1), 0);
-//
-//	underBottomPosY = centerPos.y + (height >> 1) + 50;
-//
-//	//枠の画像の分割ロード
-//	//gManager->LoadDivGraphEx(FrameGh, 9, 3, 3, 16, 16, frameGh);
-//	LoadDivGraphEx(frameData->pass, frameData->allNum, frameData->widthNum, frameData->heightNum,
-//		frameData->xSize, frameData->ySize);
-//
-//	//枠内に描画するUI画像のロード
-//	drawUIGh = gManager->LoadGraphEx(UIGh);
-//}
+
 
 //枠の中に画像を描画したい場合はこっちで生成する
-GraphicUI::GraphicUI(int FrameWidth, int FrameHeight, std::string UIGh, std::shared_ptr<UIData> FrameData)
+GraphicUI::GraphicUI(int FrameWidth, int FrameHeight, std::string UIGh, std::shared_ptr<UIData> FrameData, int Type)
 {
 	gManager = GameManager::Instance();
+
+	uiType = Type;
 
 	//枠のUIデータの代入
 	frameData = FrameData;
@@ -64,14 +35,17 @@ GraphicUI::GraphicUI(int FrameWidth, int FrameHeight, std::string UIGh, std::sha
 	LoadDivGraphEx(frameData->pass, frameData->allNum, frameData->widthNum, frameData->heightNum,
 		frameData->xSize, frameData->ySize);
 
+	drawGraphicPass = UIGh;
 	//枠内に描画するUI画像のロード
 	drawUIGh = gManager->LoadGraphEx(UIGh);
 }
 
 //枠だけ欲しい場合はこっちで生成する
-GraphicUI::GraphicUI(int FrameWidth, int FrameHeight, std::shared_ptr<UIData> FrameData)
+GraphicUI::GraphicUI(int FrameWidth, int FrameHeight, std::shared_ptr<UIData> FrameData, int Type)
 {
 	gManager = GameManager::Instance();
+
+	uiType = Type;
 
 	//枠のUIデータの代入
 	frameData = FrameData;
@@ -99,12 +73,25 @@ GraphicUI::GraphicUI(int FrameWidth, int FrameHeight, std::shared_ptr<UIData> Fr
 		frameData->xSize, frameData->ySize);
 }
 //引き伸ばさない場合はこっちで生成する
-GraphicUI::GraphicUI(std::string Pass, float CenterX, float CenterY)
-{
+GraphicUI::GraphicUI(std::string Pass, int FrameWidth, int FrameHeight, std::shared_ptr<UIData> FrameData, int Type)
+{//枠のUIデータの代入
+	frameData = FrameData;
+	uiType = Type;
+
 	gManager = GameManager::Instance();
+	buttonPass = Pass;
 	buttonGh = gManager->LoadGraphEx(Pass);
-	centerPos.x = CenterX;
-	centerPos.y = CenterY;
+
+	//UI元画像の横幅取得
+	width = FrameWidth;
+
+	//UI元画像の縦幅取得
+	height = FrameHeight;
+
+	//UIの左上の描画座標
+	pos = frameData->leftTopPos;
+	//中心座標を取得
+	centerPos = tnl::Vector3(pos.x + (width >> 1), pos.y + (height >> 1), 0);
 }
 
 GraphicUI::~GraphicUI()
@@ -118,6 +105,17 @@ void GraphicUI::Draw()
 	//画像がなければ描画しない
 	if (drawUIGh == -1)return;
 	DrawRotaGraph(centerPos.x, centerPos.y, 0.98, 0, drawUIGh, true);
+}
+//カンマ区切りにしてデータを返す関数
+std::string GraphicUI::GetCsvStringData(int Id)
+{
+	std::string data = std::to_string(Id) + "," + frameData->pass + "," + std::to_string(uiType) + "," + std::to_string(frameData->allNum) + "," + std::to_string(frameData->widthNum) + ","
+		+ std::to_string(frameData->heightNum) + "," + std::to_string(frameData->xSize) + "," + std::to_string(frameData->ySize) + ","
+		+ std::to_string(frameData->leftTopPos.x) + "," + std::to_string(frameData->leftTopPos.y) + "," + std::to_string(width) + ","
+		+ std::to_string(height) + "," + drawGraphicPass;
+
+
+	return data;
 }
 //画像のVectorへの分割ロード
 void GraphicUI::LoadDivGraphEx(std::string Pass, const int AllNum, const int WidthNum, const int HeightNum, int XSize, int YSize)

@@ -43,7 +43,7 @@ public:
 		//指定したフォルダの中の全ての画像を読み込む
 	void LoadFileResource();
 
-
+	void SaveUIButton();
 private:
 	//gamemanager
 	GameManager* gManager = nullptr;
@@ -114,7 +114,7 @@ private:
 
 	//システムUIとのクリック判定関数
 	//saveボタン
-	void SaveUIButton();
+	//void SaveUIButton();
 	//resetボタン
 	void ResetUIButton();
 	//loadボタン

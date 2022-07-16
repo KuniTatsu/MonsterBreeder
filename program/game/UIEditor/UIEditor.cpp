@@ -1,4 +1,5 @@
 #include "UIEditor.h"
+#include<fstream>
 #include"../UI/GraphicUI.h"
 #include"../UIEditor/Graphic.h"
 #include"../Manager/GameManager.h"
@@ -24,30 +25,30 @@ void UIEditor::Init()
 	//リソースグラフィック欄の背景生成
 	{
 		auto data = std::make_shared<UIData>("graphics/FrameBlack.png", 9, 3, 3, 16, 16, 0.0f, 0.0f);
-		resourcesFrame = std::make_shared<GraphicUI>(300, 768, data);
+		resourcesFrame = std::make_shared<GraphicUI>(300, 768, data, static_cast<uint32_t>(LOADMODE::NORMAL));
 	}
 	//出力ボタンの生成
 	{
-		//auto data = std::make_shared<UIData>("graphics/FrameBlack.png", 9, 3, 3, 16, 16, 900.0f, 0.0f);
-		saveButton = std::make_shared<GraphicUI>("graphics/UIEditor/SaveButton.png", 950.0f, 100.0f);
+		auto data = std::make_shared<UIData>("graphics/UIEditor/SaveButton.png", 1, 1, 1, 100, 100, 900.0f, 0.0f);
+		saveButton = std::make_shared<GraphicUI>("graphics/UIEditor/SaveButton.png", 100, 100, data, static_cast<uint32_t>(LOADMODE::NORMAL));
 		SystemButtons.emplace_back(saveButton);
 	}
 	//リセット/全消去ボタンの生成
 	{
-		//auto data = std::make_shared<UIData>("graphics/FrameBlack.png", 9, 3, 3, 16, 16, 900.0f, 110.0f);
-		resetButton = std::make_shared<GraphicUI>("graphics/UIEditor/ResetButton.png", 950.0f, 210.0f);
+		auto data = std::make_shared<UIData>("graphics/UIEditor/ResetButton.png", 1, 1, 1, 100, 100, 900.0f, 110.0f);
+		resetButton = std::make_shared<GraphicUI>("graphics/UIEditor/ResetButton.png", 100, 100, data, static_cast<uint32_t>(LOADMODE::NORMAL));
 		SystemButtons.emplace_back(resetButton);
 	}
 	//ロードボタンの生成
 	{
-		//auto data = std::make_shared<UIData>("graphics/FrameBlack.png", 9, 3, 3, 16, 16, 900.0f, 220.0f);
-		loadButton = std::make_shared<GraphicUI>("graphics/UIEditor/LoadButton.png", 950.0f, 320.0f);
+		auto data = std::make_shared<UIData>("graphics/UIEditor/LoadButton.png", 1, 1, 1, 100, 100, 900.0f, 220.0f);
+		loadButton = std::make_shared<GraphicUI>("graphics/UIEditor/LoadButton.png", 100, 100, data, static_cast<uint32_t>(LOADMODE::NORMAL));
 		SystemButtons.emplace_back(loadButton);
 	}
 	//モード変更ボタンの生成
 	{
-		//auto data = std::make_shared<UIData>("graphics/ModeNoEdit.png", 9, 3, 3, 16, 16, 900, 330);
-		modeChangeButton = std::make_shared<GraphicUI>("graphics/UIEditor/ModeNoEdit.png", 950.0f, 430.0f);
+		auto data = std::make_shared<UIData>("graphics/UIEditor/ModeNoEdit.png", 1, 1, 1, 100, 100, 900.0f, 330.0f);
+		modeChangeButton = std::make_shared<GraphicUI>("graphics/UIEditor/ModeNoEdit.png", 100, 100, data, static_cast<uint32_t>(LOADMODE::NORMAL));
 		SystemButtons.emplace_back(modeChangeButton);
 	}
 }
@@ -70,6 +71,10 @@ void UIEditor::Draw()
 }
 void UIEditor::SaveUIButton()
 {
+	//カンマ区切りのテキストデータに変換
+	UiToString();
+	//指定したパスにCsvファイルを生成or上書き
+	UiOutput();
 }
 void UIEditor::ResetUIButton()
 {
@@ -80,11 +85,39 @@ void UIEditor::LoadUIButton()
 void UIEditor::ModeChangeButton()
 {
 }
+//UIをCSV出力する際のカンマ区切りデータの文字列に変換する関数
 void UIEditor::UiToString()
 {
+	int idCount = 0;
+	for (auto ui : makedUI) {
+
+		std::string data = ui->GetCsvStringData(idCount);
+
+		UIText.emplace_back(data);
+		idCount++;
+	}
 }
+//Csvデータの出力関数
 void UIEditor::UiOutput()
 {
+	//ofstream型の変数 開いたファイルが展開される
+	std::ofstream writingfile;
+	//相対パス
+	std::string filename = "Csv/UI/TestSaveUI.csv";
+
+	//パスから出力設定でファイルを開く
+	writingfile.open(filename, std::ios::out);
+
+	//0行目だけは先に書き込む
+	writingfile << "id, frameGhPass, type 0:split, 1 : normal, allNum, widthNum, heightNum, widthSize, heightSize, leftTopPos.x, leftTopPos.y, FrameWidth, FrameHeight, ingraphicsPass" << std::endl;
+
+
+	//UITextにある内容を全てcsvファイルに書き込む
+	for (auto outText : UIText) {
+		writingfile << outText << std::endl;
+	}
+	//開いたファイルの開放
+	writingfile.close();
 }
 //画像パスから新しい画像リソースをロードする
 void UIEditor::LoadResourceGraphic(std::string Pass, int Width, int Height)
@@ -205,7 +238,7 @@ void UIEditor::DrawSelectSequence()
 	DrawResource();
 
 	//セーブ、リセット、ロード、モード変更ボタンの表示
-	for (auto &button : SystemButtons) {
+	for (auto& button : SystemButtons) {
 		button->Draw();
 	}
 }
@@ -229,6 +262,8 @@ void UIEditor::LoadUI(std::string Pass)
 	//1行目からスタート(0行目は項目名)
 	for (int i = 1; i < loadUICsv.size(); ++i) {
 
+		//id	frameGhPass	type 0:split,1:normal	allNum	widthNum	heightNum	widthSize	heightSize	leftTopPos.x	leftTopPos.y	FrameWidth	FrameHeight	ingraphicsPass
+
 		//------string型のデータをint型とfloat型に変換し、ローカル変数に保管する処理----//
 		//type 0:分割ロード,1:そのままロード
 		int type = stoi(loadUICsv[i][2]);
@@ -247,14 +282,14 @@ void UIEditor::LoadUI(std::string Pass)
 
 		//------------------------------------------------------------------------------//
 
+		//UIDataクラスを生成
+		auto data = std::make_shared<UIData>(loadUICsv[i][1], allNum, widthNum, heightNum, widthSize, heightSize, posX, posY);
+
 		//画像を引き伸ばさずに使うUIの場合
 		if (type == static_cast<uint32_t>(LOADMODE::NORMAL)) {
 
-			float centerX = posX + (widthSize / 2);
-			float centerY = posY + (heightSize / 2);
-
 			//GraphicUIクラスを生成(画像を拡大せずに使う場合)
-			auto newUI = std::make_shared<GraphicUI>(loadUICsv[i][1], centerX, centerY);
+			auto newUI = std::make_shared<GraphicUI>(loadUICsv[i][1], frameWidth, frameHeight, data, type);
 			//vectorに登録
 			makedUI.emplace_back(newUI);
 			//次のループへ
@@ -262,19 +297,19 @@ void UIEditor::LoadUI(std::string Pass)
 		}
 
 
-		//UIDataクラスを生成
-		auto data = std::make_shared<UIData>(loadUICsv[i][1], allNum, widthNum, heightNum, widthSize, heightSize, posX, posY);
+		////UIDataクラスを生成
+		//auto data = std::make_shared<UIData>(loadUICsv[i][1], allNum, widthNum, heightNum, widthSize, heightSize, posX, posY);
 
-		if (loadUICsv[i][11] == "") {
+		if (loadUICsv[i][12] == "none") {
 			//GraphicUIクラスを生成(枠の中に画像がない場合)
-			auto newUI = std::make_shared<GraphicUI>(frameWidth, frameHeight, data);
+			auto newUI = std::make_shared<GraphicUI>(frameWidth, frameHeight, data, type);
 
 			//vectorに登録
 			makedUI.emplace_back(newUI);
 		}
 		else {
 			//GraphicUIクラスを生成(枠の中に画像がある場合
-			auto newUI = std::make_shared<GraphicUI>(frameWidth, frameHeight, loadUICsv[i][11], data);
+			auto newUI = std::make_shared<GraphicUI>(frameWidth, frameHeight, loadUICsv[i][12], data, type);
 
 			//vectorに登録
 			makedUI.emplace_back(newUI);

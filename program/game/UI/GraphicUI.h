@@ -13,12 +13,12 @@ public:
 	//GraphicUI(tnl::Vector3 Pos, int FrameWidth, int FrameHeight, std::string UIGh, std::shared_ptr<UIData>UIData);
 
 	//フレーム内に画像を入れる場合
-	GraphicUI(int FrameWidth, int FrameHeight, std::string UIGh, std::shared_ptr<UIData>FrameData);
+	GraphicUI(int FrameWidth, int FrameHeight, std::string UIGh, std::shared_ptr<UIData>FrameData,int Type);
 	//フレーム内に画像が無い場合(フレームのみの描画)
-	GraphicUI(int FrameWidth, int FrameHeight, std::shared_ptr<UIData>FrameData);
+	GraphicUI(int FrameWidth, int FrameHeight, std::shared_ptr<UIData>FrameData,int Type);
 	//フレームを引き伸ばさない場合
-	GraphicUI(std::string Pass, float CenterX, float CenterY);
-
+	//GraphicUI(std::string Pass, float CenterX, float CenterY);
+	GraphicUI(std::string Pass, int FrameWidth, int FrameHeight, std::shared_ptr<UIData> FrameData,int Type);
 
 	~GraphicUI();
 
@@ -42,12 +42,15 @@ public:
 		return static_cast<int>(underBottomPosY);
 	}
 
+	//CSV出力の際のデータ取得関数
+	std::string GetCsvStringData(int Id);
+
 private:
 
 	GameManager* gManager = nullptr;
 
 	//枠UIのデータ 画像パス,総分割枚数,横枚数,縦枚数,横サイズ,縦サイズ
-	std::shared_ptr<UIData> frameData;
+	std::shared_ptr<UIData> frameData = nullptr;
 
 	//vectorへの分割ロード
 	void LoadDivGraphEx(std::string Pass, const int AllNum, const int WidthNum, const int HeightNum, int XSize, int YSize);
@@ -62,6 +65,15 @@ private:
 	//UI画像の中心描画座標
 	tnl::Vector3 centerPos = {};
 
+	//UIのタイプ　0:分割拡大,1:そのまま拡大なし
+	int uiType = -1;
+
+	enum class UITYPE:uint32_t {
+		SPLIT,
+		NORMAL,
+		MAX
+	};
+
 	//UIの枠の横幅
 	int width = 0;
 	//UIの枠の縦幅
@@ -75,8 +87,14 @@ private:
 
 	//枠画像ハンドル
 	std::vector<int>frameGh;
+
+	//分割無し画像のパス
+	std::string buttonPass = "";
 	//分割無し画像のハンドル
 	int buttonGh = 0;
+
+	//枠内に描画するUI画像のパス
+	std::string drawGraphicPass = "none";
 
 	//枠内に描画するUI画像ハンドル
 	int drawUIGh = -1;
