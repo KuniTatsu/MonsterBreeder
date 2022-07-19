@@ -43,7 +43,6 @@ public:
 		//指定したフォルダの中の全ての画像を読み込む
 	void LoadFileResource();
 
-	void SaveUIButton();
 private:
 	//gamemanager
 	GameManager* gManager = nullptr;
@@ -113,8 +112,10 @@ private:
 	};
 
 	//システムUIとのクリック判定関数
+	void CheckButtonClick();
+
 	//saveボタン
-	//void SaveUIButton();
+	void SaveUIButton();
 	//resetボタン
 	void ResetUIButton();
 	//loadボタン
@@ -122,20 +123,20 @@ private:
 	//changeボタン
 	void ModeChangeButton();
 
+	//ボタンを押したときの処理を入れておく関数の配列
+	const std::function< void(UIEditor*) > BUTTONPROCESS[4] = { &UIEditor::SaveUIButton,&UIEditor::ResetUIButton,
+																&UIEditor::LoadUIButton,&UIEditor::ModeChangeButton };
+
 	//---------アウトプット用-------------//
 	//出力用整形済み文字列配列
 	std::vector<std::string> UIText;
-	
+
 	//出力用の文字列型にデータを整形する関数
 	void UiToString();
 	//出力関数 カンマ区切りのデータで出力
 	void UiOutput();
 	//--------------------------------------//
 
-	//ボタンが押されたときに実行する関数の配列
-	const std::function< void(UIEditor*) > BUTTONCLICK[4] = { &UIEditor::SaveUIButton,&UIEditor::ResetUIButton
-															,&UIEditor::LoadUIButton,&UIEditor::ModeChangeButton };
-	//------------------------------------------------//
 
 	//----------UIEditorのリソース関係の関数----------//
 
@@ -149,6 +150,16 @@ private:
 	void LoadFileResource();
 	*/
 
+	//リロード対象
+	enum class UIFILE :uint32_t {
+		DEFAULT,
+		SAVED,
+		DEBUG,
+		MAX
+	};
+	//UIロード対象のパス
+	const std::string RELOADPASS[static_cast<uint32_t>(UIFILE::MAX)] = { "Csv/UI/SaveUI.csv","Csv/UI/TestSaveUI.csv","Csv/UI/TestSaveUI.csv" };
+
 	//指定フォルダの相対パス(slnファイルが有る場所からのパス)
 	const std::string LOADFILEPASS = "graphics\\UI\\*.png";
 
@@ -160,15 +171,17 @@ private:
 
 	//----------------------------------------------//
 
-	//シークエンス処理
+	//----------シークエンス処理---------------------//
 	//初期シークエンスを設定
 	tnl::Sequence<UIEditor> mainSequence =
 		tnl::Sequence<UIEditor>(this, &UIEditor::SeqSelect);
 
+	//各シークエンスのUpdate関数
 	bool SeqSelect(const float DeltaTime);
 	bool SeqPlace(const float DeltaTime);
 	bool SeqEdit(const float DeltaTime);
 
+	//シークエンス一覧
 	enum class SEQUENCE :uint32_t {
 		SELECT,
 		PLACE,
@@ -177,6 +190,9 @@ private:
 	};
 
 	SEQUENCE nowSequence = SEQUENCE::SELECT;
+
+	//シークエンス変更関数
+	bool ChangeSequence(SEQUENCE NextSeq);
 
 	//シークエンスごとの描画関数
 	void DrawSelectSequence();

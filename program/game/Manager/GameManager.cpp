@@ -59,6 +59,7 @@ void GameManager::Update(const float Deltatime)
 	mouseWheel = GetMouseWheelRotVol();  //ƒzƒC[ƒ‹‚Ì‰ñ“]—ÊŽæ“¾
 
 	SceneManager::Update();
+	editor->Update();
 
 }
 void GameManager::Draw(const float Deltatime)
@@ -88,7 +89,7 @@ void GameManager::initGameManager()
 	editor->LoadUI("Csv/UI/SaveUI.csv");
 
 	//debug
-	editor->SaveUIButton();
+	//editor->SaveUIButton();
 	//editor->UiToString();
 
 //	editor->LoadFileResource();

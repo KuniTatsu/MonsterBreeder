@@ -42,6 +42,9 @@ public:
 		return static_cast<int>(underBottomPosY);
 	}
 
+	//UIの左上の座標取得
+	tnl::Vector3& GetLeftTopPos();
+
 	//CSV出力の際のデータ取得関数
 	std::string GetCsvStringData(int Id);
 

@@ -106,6 +106,10 @@ void GraphicUI::Draw()
 	if (drawUIGh == -1)return;
 	DrawRotaGraph(centerPos.x, centerPos.y, 0.98, 0, drawUIGh, true);
 }
+tnl::Vector3& GraphicUI::GetLeftTopPos()
+{
+	return frameData->leftTopPos;
+}
 //カンマ区切りにしてデータを返す関数
 std::string GraphicUI::GetCsvStringData(int Id)
 {
@@ -113,7 +117,6 @@ std::string GraphicUI::GetCsvStringData(int Id)
 		+ std::to_string(frameData->heightNum) + "," + std::to_string(frameData->xSize) + "," + std::to_string(frameData->ySize) + ","
 		+ std::to_string(frameData->leftTopPos.x) + "," + std::to_string(frameData->leftTopPos.y) + "," + std::to_string(width) + ","
 		+ std::to_string(height) + "," + drawGraphicPass;
-
 
 	return data;
 }

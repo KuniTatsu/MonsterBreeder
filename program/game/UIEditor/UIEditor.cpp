@@ -8,15 +8,12 @@ using namespace std;
 
 UIEditor::UIEditor()
 {
-	Init();
-
-
 }
 
 UIEditor::~UIEditor()
 {
 }
-
+//エディターの初期化関数
 void UIEditor::Init()
 {
 	//GameManagerインスタンス取得
@@ -55,6 +52,8 @@ void UIEditor::Init()
 
 void UIEditor::Update()
 {
+	//マウスポジション取得
+	GetMousePoint(&mouseX, &mouseY);
 	//現在のシークエンスの更新関数の実行
 	mainSequence.update(gManager->deltatime);
 }
@@ -69,19 +68,43 @@ void UIEditor::Draw()
 	//現在のシークエンスの間のみ描画したい内容の描画
 	DRAWSEQUENCE[static_cast<uint32_t>(nowSequence)](this);
 }
+void UIEditor::CheckButtonClick()
+{
+	for (int i = 0; i < SystemButtons.size(); ++i) {
+
+		//ボタンの左上の座標を取得
+		tnl::Vector3 leftTopPos = SystemButtons[i]->GetLeftTopPos();
+		//もしボタンがクリックされていたら
+		if (gManager->isClickedRect(mouseX, mouseY, leftTopPos.x, leftTopPos.y,
+			leftTopPos.x + SystemButtons[i]->GetUIWidth(), leftTopPos.y + SystemButtons[i]->GetUIHeight()))
+		{
+			BUTTONPROCESS[i](this);
+			break;
+		}
+	}
+}
+//セーブボタンを押したときの処理
 void UIEditor::SaveUIButton()
 {
+	tnl::DebugTrace("\nセーブボタンが押されたよ\n");
 	//カンマ区切りのテキストデータに変換
 	UiToString();
 	//指定したパスにCsvファイルを生成or上書き
 	UiOutput();
 }
+//リセットボタンの処理
 void UIEditor::ResetUIButton()
 {
+	//画面の中にあるUIを全て消去する
+	makedUI.clear();
 }
+//ロードボタンの処理
 void UIEditor::LoadUIButton()
 {
+	//標準の読み込みパスでUIをロードする
+	LoadUI(RELOADPASS[static_cast<uint32_t>(UIFILE::DEFAULT)]);
 }
+//チェンジボタンの処理
 void UIEditor::ModeChangeButton()
 {
 }
@@ -103,7 +126,8 @@ void UIEditor::UiOutput()
 	//ofstream型の変数 開いたファイルが展開される
 	std::ofstream writingfile;
 	//相対パス
-	std::string filename = "Csv/UI/TestSaveUI.csv";
+	//std::string filename = "Csv/UI/TestSaveUI.csv";
+	std::string filename = RELOADPASS[static_cast<uint32_t>(UIFILE::DEBUG)];
 
 	//パスから出力設定でファイルを開く
 	writingfile.open(filename, std::ios::out);
@@ -192,7 +216,7 @@ void UIEditor::LoadFileResource()
 		FileRead_findClose(FindHandle);
 	}
 }
-
+//初回にロードする分割引き伸ばしのデフォルトUI
 void UIEditor::LoadDefaultResource()
 {
 	auto black = std::make_shared<Graphic>(tnl::Vector3(150, 100, 0), "graphics/FrameBlack.png", 48, 48);
@@ -201,7 +225,7 @@ void UIEditor::LoadDefaultResource()
 	resources.emplace_back(black);
 	resources.emplace_back(white);
 }
-
+//画面左端に描画する素材画像
 void UIEditor::DrawResource()
 {
 	for (auto resource : resources) {
@@ -214,7 +238,7 @@ void UIEditor::DrawResource()
 //画面に設置するUI画像を左端の画像リストから選ぶシークエンス デフォルト画面
 bool UIEditor::SeqSelect(const float DeltaTime)
 {
-	//ロードボタンを押したときの処理
+	CheckButtonClick();
 
 
 	return true;
@@ -228,6 +252,31 @@ bool UIEditor::SeqPlace(const float DeltaTime)
 bool UIEditor::SeqEdit(const float DeltaTime)
 {
 	return true;
+}
+
+//シークエンス変更関数
+bool UIEditor::ChangeSequence(SEQUENCE NextSeq)
+{
+	switch (NextSeq)
+	{
+	case SEQUENCE::SELECT:
+		mainSequence.change(&UIEditor::SeqSelect);
+		return true;
+		break;
+	case SEQUENCE::PLACE:
+		mainSequence.change(&UIEditor::SeqPlace);
+		return true;
+		break;
+	case SEQUENCE::EDIT:
+		mainSequence.change(&UIEditor::SeqEdit);
+		return true;
+		break;
+	default:
+		return false;
+		break;
+	}
+
+	return false;
 }
 
 void UIEditor::DrawSelectSequence()
@@ -295,11 +344,6 @@ void UIEditor::LoadUI(std::string Pass)
 			//次のループへ
 			continue;
 		}
-
-
-		////UIDataクラスを生成
-		//auto data = std::make_shared<UIData>(loadUICsv[i][1], allNum, widthNum, heightNum, widthSize, heightSize, posX, posY);
-
 		if (loadUICsv[i][12] == "none") {
 			//GraphicUIクラスを生成(枠の中に画像がない場合)
 			auto newUI = std::make_shared<GraphicUI>(frameWidth, frameHeight, data, type);
