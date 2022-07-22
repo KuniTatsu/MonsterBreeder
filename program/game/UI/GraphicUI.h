@@ -48,6 +48,8 @@ public:
 	//CSV出力の際のデータ取得関数
 	std::string GetCsvStringData(int Id);
 
+	//passを使った画像変更関数
+	void ReLoadGraphic(std::string Pass);
 private:
 
 	GameManager* gManager = nullptr;
@@ -60,7 +62,6 @@ private:
 
 	//画像変更/再ロード関数
 	void ReLoadDivGraphic(std::string Pass, const int AllNum, const int WidthNum, const int HeightNum, int XSize, int YSize);
-	void ReLoadGraphic(std::string Pass);
 
 	//UI一つの左上描画座標
 	tnl::Vector3 pos = {};

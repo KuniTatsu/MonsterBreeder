@@ -56,6 +56,12 @@ private:
 	//リソース画像の配列
 	std::vector<std::shared_ptr<Graphic>>resources;
 
+	//selectシークエンスで選択した画像リソースポインタ
+	std::shared_ptr<Graphic>nowSelectGraphic = nullptr;
+
+	//リソース選択関数
+	bool CheckSelectResource();
+
 	//ロード時の拡大ありなし
 	enum class LOADMODE :uint32_t {
 		SPLIT,
@@ -74,6 +80,9 @@ private:
 	};
 	//関数使用のための配列
 	const EDITMODE MODE[static_cast<uint32_t>(EDITMODE::MAX)] = { EDITMODE::NOEDIT,EDITMODE::SAMERATIO,EDITMODE::FREERATIO };
+
+	//modeごとの使用画像配列
+	const std::string MODEGRAPHICPASS[static_cast<uint32_t>(EDITMODE::MAX)] = { "graphics/UIEditor/ModeNoEdit.png","graphics/UIEditor/ModeSameRatio.png","graphics/UIEditor/ModeFreeRatio.png" };
 
 	//現在のモード　フォルトは拡大なし
 	int nowMode = static_cast<uint32_t>(EDITMODE::NOEDIT);
@@ -162,6 +171,9 @@ private:
 
 	//指定フォルダの相対パス(slnファイルが有る場所からのパス)
 	const std::string LOADFILEPASS = "graphics\\UI\\*.png";
+
+	//リソースエリアに描画する画像の正方サイズ
+	const int DRAWSIZE = 100;
 
 	//初回リソース画像読み込み(基本UIの枠のみ必ず読み込む)
 	void LoadDefaultResource();

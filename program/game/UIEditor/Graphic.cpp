@@ -18,3 +18,4 @@ Graphic::Graphic(tnl::Vector3 Pos, std::string Pass, int Width, int Height)
 	width = Width;
 	height = Height;
 }
+

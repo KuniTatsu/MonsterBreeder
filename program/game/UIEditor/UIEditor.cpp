@@ -19,6 +19,8 @@ void UIEditor::Init()
 	//GameManagerインスタンス取得
 	gManager = GameManager::Instance();
 
+	LoadDefaultResource();
+
 	//リソースグラフィック欄の背景生成
 	{
 		auto data = std::make_shared<UIData>("graphics/FrameBlack.png", 9, 3, 3, 16, 16, 0.0f, 0.0f);
@@ -67,9 +69,14 @@ void UIEditor::Draw()
 
 	//現在のシークエンスの間のみ描画したい内容の描画
 	DRAWSEQUENCE[static_cast<uint32_t>(nowSequence)](this);
+
+	
 }
 void UIEditor::CheckButtonClick()
 {
+	//マウスが右側のエリアになかったらそもそも判定しない
+	if (mouseX < 700)return;
+
 	for (int i = 0; i < SystemButtons.size(); ++i) {
 
 		//ボタンの左上の座標を取得
@@ -107,6 +114,11 @@ void UIEditor::LoadUIButton()
 //チェンジボタンの処理
 void UIEditor::ModeChangeButton()
 {
+	//拡大モードを一つ進める
+	ChangeEditMode();
+	//画像を変更
+	modeChangeButton->ReLoadGraphic(MODEGRAPHICPASS[nowMode]);
+
 }
 //UIをCSV出力する際のカンマ区切りデータの文字列に変換する関数
 void UIEditor::UiToString()
@@ -216,6 +228,42 @@ void UIEditor::LoadFileResource()
 		FileRead_findClose(FindHandle);
 	}
 }
+bool UIEditor::CheckSelectResource()
+{
+	//マウスが左側にいなければそもそも判定しない
+	if (mouseX > 300)return false;
+	//int hoge = 0;
+	//if (hoge == 0) {
+	//	hoge++;
+	//}
+
+	for (auto graphic : resources) {
+		//左クリック検知
+		if (tnl::Input::IsMouseTrigger(tnl::Input::eMouseTrigger::IN_LEFT)) {
+			//左上座標
+			int topLeftX = graphic->pos.x - DRAWSIZE / 2;
+			int topLeftY = graphic->pos.y - DRAWSIZE / 2;
+
+			//右下座標
+			int bottomRightX = graphic->pos.x + DRAWSIZE / 2;
+			int bottomRightY = graphic->pos.y + DRAWSIZE / 2;
+
+			//リソース画像をクリックしていたら
+			//if (gManager->isClickedRect(mouseX, mouseY, topLeftX, topLeftY, bottomRightX, bottomRightY)) {
+			if (gManager->isClickedRect(mouseX, mouseY, topLeftX, topLeftY, bottomRightX, bottomRightY)) {
+				//選択中の画像にポインタをいれる
+				nowSelectGraphic = graphic;
+				//設置シークエンスに移動する
+				//ChangeSequence(SEQUENCE::PLACE);
+
+				//trueが帰れば設置シークエンスに移動させる
+				return true;
+			}
+		}
+	}
+	//falseが帰るとシークエンスを移動しない
+	return false;
+}
 //初回にロードする分割引き伸ばしのデフォルトUI
 void UIEditor::LoadDefaultResource()
 {
@@ -231,14 +279,20 @@ void UIEditor::DrawResource()
 	for (auto resource : resources) {
 		//DrawRotaGraph(resource->pos.x, resource->pos.y, 1, 0, resource->gh, false);
 		//どんな素材画像も100x100に縮小して描画する
-		DrawExtendGraph(resource->pos.x - 50, resource->pos.y - 50, resource->pos.x + 50, resource->pos.y + 50, resource->gh, true);
+		DrawExtendGraph(resource->pos.x - DRAWSIZE / 2, resource->pos.y - DRAWSIZE / 2,
+			resource->pos.x + DRAWSIZE / 2, resource->pos.y + DRAWSIZE / 2, resource->gh, true);
 	}
 }
 
 //画面に設置するUI画像を左端の画像リストから選ぶシークエンス デフォルト画面
 bool UIEditor::SeqSelect(const float DeltaTime)
 {
+	//セーブなどのボタンクリック検知
 	CheckButtonClick();
+
+	//リソースエリアから画像を選ぶ 
+	//trueが帰ってくれば画像を選んでいるので、設置シークエンスに移動する
+	if (CheckSelectResource())ChangeSequence(SEQUENCE::PLACE);
 
 
 	return true;
@@ -246,6 +300,9 @@ bool UIEditor::SeqSelect(const float DeltaTime)
 //Selectシークエンスで選んだUI画像を置く場所を決めるシークエンス 大きさ変更を行わない場合はSelectに戻る
 bool UIEditor::SeqPlace(const float DeltaTime)
 {
+
+
+
 	return true;
 }
 //Placeシークエンスで置いたUIの右下を引き伸ばし、大きさ変更を行うシークエンス
@@ -261,14 +318,17 @@ bool UIEditor::ChangeSequence(SEQUENCE NextSeq)
 	{
 	case SEQUENCE::SELECT:
 		mainSequence.change(&UIEditor::SeqSelect);
+		nowSequence = SEQUENCE::SELECT;
 		return true;
 		break;
 	case SEQUENCE::PLACE:
 		mainSequence.change(&UIEditor::SeqPlace);
+		nowSequence = SEQUENCE::PLACE;
 		return true;
 		break;
 	case SEQUENCE::EDIT:
 		mainSequence.change(&UIEditor::SeqEdit);
+		nowSequence = SEQUENCE::EDIT;
 		return true;
 		break;
 	default:
@@ -294,6 +354,8 @@ void UIEditor::DrawSelectSequence()
 
 void UIEditor::DrawPlaceSequence()
 {
+	//マウスに選択中の画像を追従させる
+	DrawRotaGraph(mouseX, mouseY, 1, 0, nowSelectGraphic->gh, true);
 }
 
 void UIEditor::DrawEditSequence()
