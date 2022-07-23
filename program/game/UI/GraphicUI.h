@@ -13,12 +13,17 @@ public:
 	//GraphicUI(tnl::Vector3 Pos, int FrameWidth, int FrameHeight, std::string UIGh, std::shared_ptr<UIData>UIData);
 
 	//フレーム内に画像を入れる場合
-	GraphicUI(int FrameWidth, int FrameHeight, std::string UIGh, std::shared_ptr<UIData>FrameData,int Type);
+	GraphicUI(int FrameWidth, int FrameHeight, std::string UIGh, std::shared_ptr<UIData>FrameData, int Type);
 	//フレーム内に画像が無い場合(フレームのみの描画)
-	GraphicUI(int FrameWidth, int FrameHeight, std::shared_ptr<UIData>FrameData,int Type);
+	GraphicUI(int FrameWidth, int FrameHeight, std::shared_ptr<UIData>FrameData, int Type);
+
+	//-----↓引数を減らした結果↑のコンストラクタと統合した-------//
+	/*
 	//フレームを引き伸ばさない場合
-	//GraphicUI(std::string Pass, float CenterX, float CenterY);
-	GraphicUI(std::string Pass, int FrameWidth, int FrameHeight, std::shared_ptr<UIData> FrameData,int Type);
+	//GraphicUI(std::string Pass, int FrameWidth, int FrameHeight, std::shared_ptr<UIData> imageData,int Type);
+	//					↓
+	GraphicUI(int FrameWidth, int FrameHeight, std::shared_ptr<UIData> imageData,int Type);
+	*/
 
 	~GraphicUI();
 
@@ -32,11 +37,23 @@ public:
 	inline int GetUIWidth() {
 		return width;
 	}
-
 	//UIの高さの取得
 	inline int GetUIHeight() {
 		return height;
 	}
+	//UIの幅の更新
+	inline void	SetUIWidth(int Width) {
+		width = Width;
+	}
+	//UIの高さの更新
+	inline void	SetUIHeight(int Height) {
+		height = Height;
+	}
+
+	/*inline tnl::Vector3& GetLeftTopPos() {
+		return pos;
+	}*/
+
 	//UIの直下Y座標取得
 	inline int GetUnderBottomPos() {
 		return static_cast<int>(underBottomPosY);
@@ -72,7 +89,7 @@ private:
 	//UIのタイプ　0:分割拡大,1:そのまま拡大なし
 	int uiType = -1;
 
-	enum class UITYPE:uint32_t {
+	enum class UITYPE :uint32_t {
 		SPLIT,
 		NORMAL,
 		MAX
@@ -119,9 +136,15 @@ public:
 private:
 
 	std::string pass = "";
+
+	//分割画像の場合は9分割するので9,分割なしの場合は1
 	int allNum = 0;
+
+	//分割画像の場合は3分割するので3,分割なしの場合は1
 	int widthNum = 0;
 	int heightNum = 0;
+
+	//分割画像の場合は3分割した長さ, 分割しない場合は一辺の長さ
 	int xSize = 0;
 	int ySize = 0;
 

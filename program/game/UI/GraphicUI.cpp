@@ -67,20 +67,27 @@ GraphicUI::GraphicUI(int FrameWidth, int FrameHeight, std::shared_ptr<UIData> Fr
 
 	underBottomPosY = centerPos.y + (height >> 1) + 50;
 
+	//分割なしの場合はそのままロードする
+	if (uiType == 1) {
+		buttonGh = gManager->LoadGraphEx(frameData->pass);
+		return;
+	}
+
 	//枠の画像の分割ロード
 	//gManager->LoadDivGraphEx(FrameGh, 9, 3, 3, 16, 16, frameGh);
 	LoadDivGraphEx(frameData->pass, frameData->allNum, frameData->widthNum, frameData->heightNum,
 		frameData->xSize, frameData->ySize);
 }
-//引き伸ばさない場合はこっちで生成する
-GraphicUI::GraphicUI(std::string Pass, int FrameWidth, int FrameHeight, std::shared_ptr<UIData> FrameData, int Type)
+/*
+//引き伸ばさない場合はこっちで生成する →統合したので使用しない
+GraphicUI::GraphicUI(std::string Pass, int FrameWidth, int FrameHeight, std::shared_ptr<UIData> imageData, int Type)
 {//枠のUIデータの代入
-	frameData = FrameData;
+	frameData = imageData;
 	uiType = Type;
 
 	gManager = GameManager::Instance();
-	buttonPass = Pass;
-	buttonGh = gManager->LoadGraphEx(Pass);
+	//buttonPass = frameData->pass;
+	buttonGh = gManager->LoadGraphEx(frameData->pass);
 
 	//UI元画像の横幅取得
 	width = FrameWidth;
@@ -93,6 +100,7 @@ GraphicUI::GraphicUI(std::string Pass, int FrameWidth, int FrameHeight, std::sha
 	//中心座標を取得
 	centerPos = tnl::Vector3(pos.x + (width >> 1), pos.y + (height >> 1), 0);
 }
+*/
 
 GraphicUI::~GraphicUI()
 {

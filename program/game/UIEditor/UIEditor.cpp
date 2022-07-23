@@ -9,49 +9,53 @@ using namespace std;
 UIEditor::UIEditor()
 {
 }
-
+//デストラクタでは各リスト、vectorの中身を消去し、メモリを開放させる
 UIEditor::~UIEditor()
 {
+	SystemButtons.clear();
+	makedUI.clear();
+	resources.clear();
+	UIText.clear();
 }
 //エディターの初期化関数
 void UIEditor::Init()
 {
 	//GameManagerインスタンス取得
 	gManager = GameManager::Instance();
-
+	//初期リソース画像のロード 黒と白のUI背景
 	LoadDefaultResource();
 
 	//リソースグラフィック欄の背景生成
 	{
 		auto data = std::make_shared<UIData>("graphics/FrameBlack.png", 9, 3, 3, 16, 16, 0.0f, 0.0f);
-		resourcesFrame = std::make_shared<GraphicUI>(300, 768, data, static_cast<uint32_t>(LOADMODE::NORMAL));
+		resourcesFrame = std::make_shared<GraphicUI>(300, 768, data, static_cast<uint32_t>(LOADMODE::SPLIT));
 	}
 	//出力ボタンの生成
 	{
 		auto data = std::make_shared<UIData>("graphics/UIEditor/SaveButton.png", 1, 1, 1, 100, 100, 900.0f, 0.0f);
-		saveButton = std::make_shared<GraphicUI>("graphics/UIEditor/SaveButton.png", 100, 100, data, static_cast<uint32_t>(LOADMODE::NORMAL));
+		saveButton = std::make_shared<GraphicUI>(100, 100, data, static_cast<uint32_t>(LOADMODE::NORMAL));
 		SystemButtons.emplace_back(saveButton);
 	}
 	//リセット/全消去ボタンの生成
 	{
 		auto data = std::make_shared<UIData>("graphics/UIEditor/ResetButton.png", 1, 1, 1, 100, 100, 900.0f, 110.0f);
-		resetButton = std::make_shared<GraphicUI>("graphics/UIEditor/ResetButton.png", 100, 100, data, static_cast<uint32_t>(LOADMODE::NORMAL));
+		resetButton = std::make_shared<GraphicUI>(100, 100, data, static_cast<uint32_t>(LOADMODE::NORMAL));
 		SystemButtons.emplace_back(resetButton);
 	}
 	//ロードボタンの生成
 	{
 		auto data = std::make_shared<UIData>("graphics/UIEditor/LoadButton.png", 1, 1, 1, 100, 100, 900.0f, 220.0f);
-		loadButton = std::make_shared<GraphicUI>("graphics/UIEditor/LoadButton.png", 100, 100, data, static_cast<uint32_t>(LOADMODE::NORMAL));
+		loadButton = std::make_shared<GraphicUI>(100, 100, data, static_cast<uint32_t>(LOADMODE::NORMAL));
 		SystemButtons.emplace_back(loadButton);
 	}
 	//モード変更ボタンの生成
 	{
 		auto data = std::make_shared<UIData>("graphics/UIEditor/ModeNoEdit.png", 1, 1, 1, 100, 100, 900.0f, 330.0f);
-		modeChangeButton = std::make_shared<GraphicUI>("graphics/UIEditor/ModeNoEdit.png", 100, 100, data, static_cast<uint32_t>(LOADMODE::NORMAL));
+		modeChangeButton = std::make_shared<GraphicUI>(100, 100, data, static_cast<uint32_t>(LOADMODE::NORMAL));
 		SystemButtons.emplace_back(modeChangeButton);
 	}
 }
-
+//------------------------毎フレーム外側から呼び出す関数群---------------------------------------//
 void UIEditor::Update()
 {
 	//マウスポジション取得
@@ -69,14 +73,46 @@ void UIEditor::Draw()
 
 	//現在のシークエンスの間のみ描画したい内容の描画
 	DRAWSEQUENCE[static_cast<uint32_t>(nowSequence)](this);
-
-	
 }
+
+//-----------------------------------------------------------------------------------------------//
+
+//自由拡大関数
+void UIEditor::EditFreeScale()
+{
+	//マウスに追従して幅と高さが自由に動く
+	edit->SetUIWidth(static_cast<int>(mouseX - leftTop.x));
+	edit->SetUIHeight(static_cast<int>(mouseY - leftTop.y));
+}
+//当比率拡大関数
+void UIEditor::EditSameScale()
+{
+	//マウス座標の絶対値の大きい方を取得する
+	int maxMouse = 0;
+	//mouseのX座標までの幅で高さも移動させる
+	if (mouseX >= mouseY) {
+		maxMouse = mouseX;
+
+		//左上の座標から大きい方までの距離でXとYを動かす
+		edit->SetUIWidth(static_cast<int>(maxMouse - leftTop.x));
+		edit->SetUIHeight(static_cast<int>(maxMouse - leftTop.x));
+	}
+	//mouseのY座標までの高さで幅も移動させる
+	else {
+		maxMouse = mouseY;
+
+		//左上の座標から大きい方までの距離でXとYを動かす
+		edit->SetUIWidth(static_cast<int>(maxMouse - leftTop.y));
+		edit->SetUIHeight(static_cast<int>(maxMouse - leftTop.y));
+	}
+}
+//各ボタンの感知関数
 void UIEditor::CheckButtonClick()
 {
 	//マウスが右側のエリアになかったらそもそも判定しない
 	if (mouseX < 700)return;
 
+	//全てのボタンを対象にfor文で確認する
 	for (int i = 0; i < SystemButtons.size(); ++i) {
 
 		//ボタンの左上の座標を取得
@@ -85,6 +121,7 @@ void UIEditor::CheckButtonClick()
 		if (gManager->isClickedRect(mouseX, mouseY, leftTopPos.x, leftTopPos.y,
 			leftTopPos.x + SystemButtons[i]->GetUIWidth(), leftTopPos.y + SystemButtons[i]->GetUIHeight()))
 		{
+			//i番の関数を実行 引数はthisポインタ 儀式みたいなもん
 			BUTTONPROCESS[i](this);
 			break;
 		}
@@ -102,22 +139,29 @@ void UIEditor::SaveUIButton()
 //リセットボタンの処理
 void UIEditor::ResetUIButton()
 {
+	tnl::DebugTrace("\nResetボタンが押されたよ\n");
 	//画面の中にあるUIを全て消去する
 	makedUI.clear();
 }
 //ロードボタンの処理
 void UIEditor::LoadUIButton()
 {
+	tnl::DebugTrace("\nLoadボタンが押されたよ\n");
 	//標準の読み込みパスでUIをロードする
 	LoadUI(RELOADPASS[static_cast<uint32_t>(UIFILE::DEFAULT)]);
 }
 //チェンジボタンの処理
 void UIEditor::ModeChangeButton()
 {
+	tnl::DebugTrace("\nChangeボタンが押されたよ\n");
 	//拡大モードを一つ進める
 	ChangeEditMode();
 	//画像を変更
 	modeChangeButton->ReLoadGraphic(MODEGRAPHICPASS[nowMode]);
+
+	tnl::DebugTrace("\nMODE:");
+	tnl::DebugTrace(MODESTRING[nowMode].c_str());
+	tnl::DebugTrace("\n");
 
 }
 //UIをCSV出力する際のカンマ区切りデータの文字列に変換する関数
@@ -147,7 +191,6 @@ void UIEditor::UiOutput()
 	//0行目だけは先に書き込む
 	writingfile << "id, frameGhPass, type 0:split, 1 : normal, allNum, widthNum, heightNum, widthSize, heightSize, leftTopPos.x, leftTopPos.y, FrameWidth, FrameHeight, ingraphicsPass" << std::endl;
 
-
 	//UITextにある内容を全てcsvファイルに書き込む
 	for (auto outText : UIText) {
 		writingfile << outText << std::endl;
@@ -158,7 +201,6 @@ void UIEditor::UiOutput()
 //画像パスから新しい画像リソースをロードする
 void UIEditor::LoadResourceGraphic(std::string Pass, int Width, int Height)
 {
-
 	auto pos = resources.back()->pos;
 	pos.y += 100;
 
@@ -196,13 +238,16 @@ void UIEditor::LoadFileResource()
 			//ファイル名を取得
 			std::string name = info.Name;
 
+			//filePass
+			std::string filePass = "graphics/UI/" + name;
+
 			//画像をロード
-			int gh = gManager->LoadGraphEx("graphics/UI/" + name);
+			//int gh = gManager->LoadGraphEx(filePass);
 
 			//もしリソースの配列が空だったら初期ポジションで生成する
 			if (resources.empty()) {
 				//リソースを生成する
-				auto resource = std::make_shared<Graphic>(tnl::Vector3(70, 70, 0), gh);
+				auto resource = std::make_shared<Graphic>(tnl::Vector3(70, 70, 0), filePass);
 				//配列に格納
 				resources.emplace_back(resource);
 
@@ -217,7 +262,7 @@ void UIEditor::LoadFileResource()
 				pos.y += 110;
 
 				//リソースを生成する
-				auto resource = std::make_shared<Graphic>(pos, gh);
+				auto resource = std::make_shared<Graphic>(pos, filePass);
 				//配列に格納
 				resources.emplace_back(resource);
 			}
@@ -232,10 +277,6 @@ bool UIEditor::CheckSelectResource()
 {
 	//マウスが左側にいなければそもそも判定しない
 	if (mouseX > 300)return false;
-	//int hoge = 0;
-	//if (hoge == 0) {
-	//	hoge++;
-	//}
 
 	for (auto graphic : resources) {
 		//左クリック検知
@@ -300,14 +341,79 @@ bool UIEditor::SeqSelect(const float DeltaTime)
 //Selectシークエンスで選んだUI画像を置く場所を決めるシークエンス 大きさ変更を行わない場合はSelectに戻る
 bool UIEditor::SeqPlace(const float DeltaTime)
 {
+	//クリックしたらその位置で新しくGraphicUIを生成し、makedUIに登録する
+	if (tnl::Input::IsMouseTrigger(tnl::Input::eMouseTrigger::IN_LEFT)) {
 
+		//拡大しない場合
+		if (nowMode == static_cast<uint32_t>(EDITMODE::NOEDIT)) {
 
+			//UIのデータクラスを作成
+			auto data = std::make_shared<UIData>(nowSelectGraphic->filePass, 1, 1, 1, nowSelectGraphic->width, nowSelectGraphic->height,
+				static_cast<float>(mouseX - nowSelectGraphic->width / 2), static_cast<float>(mouseY - nowSelectGraphic->height / 2));
+			//UIを作成
+			auto newGraphicUI = std::make_shared<GraphicUI>(nowSelectGraphic->width, nowSelectGraphic->height, data, static_cast<uint32_t>(LOADMODE::NORMAL));
 
+			//作成済みvectorに登録
+			makedUI.emplace_back(newGraphicUI);
+
+			//一時データの消去
+			nowSelectGraphic = nullptr;
+			tnl::DebugTrace("\nnowSelectGraphicを初期化しました\n");
+
+			//シークエンスを戻す
+			ChangeSequence(SEQUENCE::SELECT);
+			return true;
+		}
+		//拡大する場合
+		else {
+			//UIのデータクラスを作成
+			auto data = std::make_shared<UIData>(nowSelectGraphic->filePass, 9, 3, 3, static_cast<int>(nowSelectGraphic->width / 3), static_cast<int>(nowSelectGraphic->height / 3),
+				static_cast<float>(mouseX - nowSelectGraphic->width / 2), static_cast<float>(mouseY - nowSelectGraphic->height / 2));
+
+			//UIを作成
+			auto newGraphicUI = std::make_shared<GraphicUI>(nowSelectGraphic->width, nowSelectGraphic->height, data, static_cast<uint32_t>(LOADMODE::SPLIT));
+			edit = newGraphicUI;
+
+			//シークエンスをEditに移動する
+			ChangeSequence(SEQUENCE::EDIT);
+			return true;
+		}
+	}
 	return true;
 }
 //Placeシークエンスで置いたUIの右下を引き伸ばし、大きさ変更を行うシークエンス
 bool UIEditor::SeqEdit(const float DeltaTime)
 {
+	//このシークエンスに入った一フレーム目だけ呼ぶ
+	if (mainSequence.isStart()) {
+		//左上の座標の取得->基準点 左上は動かさない
+		leftTop = edit->GetLeftTopPos();
+	}
+
+	//modeがFreeなら自由拡大関数->幅と高さを自由に決める
+	if (nowMode == static_cast<uint32_t>(EDITMODE::FREERATIO)) {
+		EditFreeScale();
+	}
+	//modeがsameなら当比率拡大関数->幅と高さが常に元画像の比率と同じ
+	else if (nowMode == static_cast<uint32_t>(EDITMODE::SAMERATIO)) {
+		EditSameScale();
+	}
+
+	//左クリックをしたら大きさを決定、makedUIに登録してここまでの一時データを消去する
+	if (tnl::Input::IsMouseTrigger(tnl::Input::eMouseTrigger::IN_LEFT)) {
+		//登録
+		makedUI.emplace_back(edit);
+
+		//一時データの消去
+		nowSelectGraphic = nullptr;
+		tnl::DebugTrace("\nnowSelectGraphicを初期化しました\n");
+		edit = nullptr;
+		tnl::DebugTrace("\neditを初期化しました\n");
+
+		ChangeSequence(SEQUENCE::SELECT);
+		return true;
+	}
+
 	return true;
 }
 
@@ -360,6 +466,8 @@ void UIEditor::DrawPlaceSequence()
 
 void UIEditor::DrawEditSequence()
 {
+	//大きさ変更中の分割画像を描画
+	edit->Draw();
 }
 //CsvデータからUIをロードする関数 データの並び順を合わせること
 void UIEditor::LoadUI(std::string Pass)
@@ -372,10 +480,8 @@ void UIEditor::LoadUI(std::string Pass)
 
 	//1行目からスタート(0行目は項目名)
 	for (int i = 1; i < loadUICsv.size(); ++i) {
-
-		//id	frameGhPass	type 0:split,1:normal	allNum	widthNum	heightNum	widthSize	heightSize	leftTopPos.x	leftTopPos.y	FrameWidth	FrameHeight	ingraphicsPass
-
 		//------string型のデータをint型とfloat型に変換し、ローカル変数に保管する処理----//
+		
 		//type 0:分割ロード,1:そのままロード
 		int type = stoi(loadUICsv[i][2]);
 
@@ -396,11 +502,11 @@ void UIEditor::LoadUI(std::string Pass)
 		//UIDataクラスを生成
 		auto data = std::make_shared<UIData>(loadUICsv[i][1], allNum, widthNum, heightNum, widthSize, heightSize, posX, posY);
 
-		//画像を引き伸ばさずに使うUIの場合
+		//画像を引き伸ばさずに使うUIの場合 ->使うコンストラクタを統一した
 		if (type == static_cast<uint32_t>(LOADMODE::NORMAL)) {
 
 			//GraphicUIクラスを生成(画像を拡大せずに使う場合)
-			auto newUI = std::make_shared<GraphicUI>(loadUICsv[i][1], frameWidth, frameHeight, data, type);
+			auto newUI = std::make_shared<GraphicUI>(frameWidth, frameHeight, data, type);
 			//vectorに登録
 			makedUI.emplace_back(newUI);
 			//次のループへ

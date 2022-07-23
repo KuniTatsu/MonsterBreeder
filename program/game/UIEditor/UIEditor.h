@@ -47,6 +47,7 @@ private:
 	//gamemanager
 	GameManager* gManager = nullptr;
 
+	//マウス座標
 	int mouseX = 0;
 	int mouseY = 0;
 
@@ -58,6 +59,12 @@ private:
 
 	//selectシークエンスで選択した画像リソースポインタ
 	std::shared_ptr<Graphic>nowSelectGraphic = nullptr;
+
+	//editシークエンスで使用するための画像リソースポインタ
+	std::shared_ptr<GraphicUI>edit = nullptr;
+
+	//editシークエンスで使用する画像の左上の基準座標
+	tnl::Vector3 leftTop = {};
 
 	//リソース選択関数
 	bool CheckSelectResource();
@@ -80,6 +87,7 @@ private:
 	};
 	//関数使用のための配列
 	const EDITMODE MODE[static_cast<uint32_t>(EDITMODE::MAX)] = { EDITMODE::NOEDIT,EDITMODE::SAMERATIO,EDITMODE::FREERATIO };
+	const std::string MODESTRING[static_cast<uint32_t>(EDITMODE::MAX)] = { "NOEDIT","SAME","FREE"};
 
 	//modeごとの使用画像配列
 	const std::string MODEGRAPHICPASS[static_cast<uint32_t>(EDITMODE::MAX)] = { "graphics/UIEditor/ModeNoEdit.png","graphics/UIEditor/ModeSameRatio.png","graphics/UIEditor/ModeFreeRatio.png" };
@@ -92,6 +100,12 @@ private:
 		//クリックするごとに0->1->2->0->...の順で循環する　
 		nowMode = (nowMode + 1) % static_cast<uint32_t>(EDITMODE::MAX);
 	}
+
+	//editシークエンス用 自由拡大関数 毎フレーム呼ぶ
+	void EditFreeScale();
+	//editシークエンス用 当比率拡大関数 毎フレーム呼ぶ
+	void EditSameScale();
+
 	//--------------------------------------------------//
 
 	//----------エディター本体のシステムUI----------//
