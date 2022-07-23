@@ -74,7 +74,6 @@
     <ClCompile Include="program\game\Map.cpp" />
     <ClCompile Include="program\game\Camera.cpp" />
     <ClCompile Include="program\game\UIEditor\UIEditor.cpp" />
-    <ClCompile Include="program\game\UIEditor\EditorManager.cpp" />
     <ClCompile Include="program\game\UIEditor\Graphic.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -158,7 +157,6 @@
     <ClInclude Include="program\game\Map.h" />
     <ClInclude Include="program\game\Camera.h" />
     <ClInclude Include="program\game\UIEditor\UIEditor.h" />
-    <ClInclude Include="program\game\UIEditor\EditorManager.h" />
     <ClInclude Include="program\game\UIEditor\Graphic.h" />
   </ItemGroup>
 </Project>

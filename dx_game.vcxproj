@@ -21,7 +21,6 @@
     <ClCompile Include="program\game\Object\Player.cpp" />
     <ClCompile Include="program\game\Scene\GlobalMapScene.cpp" />
     <ClCompile Include="program\game\Scene\TitleScene.cpp" />
-    <ClCompile Include="program\game\UIEditor\EditorManager.cpp" />
     <ClCompile Include="program\game\UIEditor\Graphic.cpp" />
     <ClCompile Include="program\game\UIEditor\UIEditor.cpp" />
     <ClCompile Include="program\game\UI\GraphicUI.cpp" />
@@ -51,7 +50,6 @@
     <ClInclude Include="program\game\Object\Player.h" />
     <ClInclude Include="program\game\Scene\GlobalMapScene.h" />
     <ClInclude Include="program\game\Scene\TitleScene.h" />
-    <ClInclude Include="program\game\UIEditor\EditorManager.h" />
     <ClInclude Include="program\game\UIEditor\Graphic.h" />
     <ClInclude Include="program\game\UIEditor\UIEditor.h" />
     <ClInclude Include="program\game\UI\GraphicUI.h" />

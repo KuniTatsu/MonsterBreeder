@@ -48,16 +48,33 @@ void UIEditor::Init()
 		loadButton = std::make_shared<GraphicUI>(100, 100, data, static_cast<uint32_t>(LOADMODE::NORMAL));
 		SystemButtons.emplace_back(loadButton);
 	}
+	//ロード先変更ボタンの生成
+	{
+		auto data = std::make_shared<UIData>("graphics/UIEditor/ReloadDefault.png", 1, 1, 1, 100, 100, 900.0f, 330.0f);
+		reloadChangeButton = std::make_shared<GraphicUI>(100, 100, data, static_cast<uint32_t>(LOADMODE::NORMAL));
+		SystemButtons.emplace_back(reloadChangeButton);
+	}
+
 	//モード変更ボタンの生成
 	{
-		auto data = std::make_shared<UIData>("graphics/UIEditor/ModeNoEdit.png", 1, 1, 1, 100, 100, 900.0f, 330.0f);
+		auto data = std::make_shared<UIData>("graphics/UIEditor/ModeNoEdit.png", 1, 1, 1, 100, 100, 900.0f, 440.0f);
 		modeChangeButton = std::make_shared<GraphicUI>(100, 100, data, static_cast<uint32_t>(LOADMODE::NORMAL));
 		SystemButtons.emplace_back(modeChangeButton);
 	}
+	//リソースロードボタンの生成
+	{
+		auto data = std::make_shared<UIData>("graphics/UIEditor/ResourceLoadButton.png", 1, 1, 1, 100, 100, 900.0f, 550.0f);
+		resourceButton = std::make_shared<GraphicUI>(100, 100, data, static_cast<uint32_t>(LOADMODE::NORMAL));
+		SystemButtons.emplace_back(resourceButton);
+	}
+
 }
 //------------------------毎フレーム外側から呼び出す関数群---------------------------------------//
 void UIEditor::Update()
 {
+	//起動していなければ一切の処理をしない
+	if (!isEnable)return;
+
 	//マウスポジション取得
 	GetMousePoint(&mouseX, &mouseY);
 	//現在のシークエンスの更新関数の実行
@@ -66,6 +83,8 @@ void UIEditor::Update()
 
 void UIEditor::Draw()
 {
+	//起動していなければ一切の処理をしない
+	if (!isEnable)return;
 	//保存されたUIの描画
 	for (auto ui : makedUI) {
 		ui->Draw();
@@ -148,7 +167,7 @@ void UIEditor::LoadUIButton()
 {
 	tnl::DebugTrace("\nLoadボタンが押されたよ\n");
 	//標準の読み込みパスでUIをロードする
-	LoadUI(RELOADPASS[static_cast<uint32_t>(UIFILE::DEFAULT)]);
+	LoadUI(RELOADPASS[nowReloadPass]);
 }
 //チェンジボタンの処理
 void UIEditor::ModeChangeButton()
@@ -182,8 +201,8 @@ void UIEditor::UiOutput()
 	//ofstream型の変数 開いたファイルが展開される
 	std::ofstream writingfile;
 	//相対パス
-	//std::string filename = "Csv/UI/TestSaveUI.csv";
-	std::string filename = RELOADPASS[static_cast<uint32_t>(UIFILE::DEBUG)];
+	//std::string filename = "Csv/UI/MakedSaveUI.csv";
+	std::string filename = RELOADPASS[static_cast<uint32_t>(UIFILE::SAVED)];
 
 	//パスから出力設定でファイルを開く
 	writingfile.open(filename, std::ios::out);
@@ -198,6 +217,12 @@ void UIEditor::UiOutput()
 	//開いたファイルの開放
 	writingfile.close();
 }
+//ロードするUIのCSVファイルパスを変更する関数
+void UIEditor::ChangeReLoadPass() {
+	nowReloadPass = (nowReloadPass + 1) % static_cast<uint32_t>(UIFILE::MAX);
+	reloadChangeButton->ReLoadGraphic(LOADGRAPHICPASS[nowReloadPass]);
+}
+
 //画像パスから新しい画像リソースをロードする
 void UIEditor::LoadResourceGraphic(std::string Pass, int Width, int Height)
 {
@@ -210,12 +235,22 @@ void UIEditor::LoadResourceGraphic(std::string Pass, int Width, int Height)
 	resources.emplace_back(resource);
 
 }
-//特定のフォルダの中にある特定の拡張子の画像を読み込む
-void UIEditor::LoadFileResource()
+//画像リソースをフォルダから読み込む
+void UIEditor::ResourceButton()
 {
 	//リソースの配列を空にする
 	resources.clear();
-
+	LoadDefaultResource();
+	LoadFileResource();
+}
+//ロードするCSVを変更する
+void UIEditor::ChangeLoadCSV()
+{
+	ChangeReLoadPass();
+}
+//特定のフォルダの中にある特定の拡張子の画像を読み込む
+void UIEditor::LoadFileResource()
+{
 	//構造体 info.Nameでファイル名が取得できる
 	FILEINFO info;
 
@@ -247,7 +282,7 @@ void UIEditor::LoadFileResource()
 			//もしリソースの配列が空だったら初期ポジションで生成する
 			if (resources.empty()) {
 				//リソースを生成する
-				auto resource = std::make_shared<Graphic>(tnl::Vector3(70, 70, 0), filePass);
+				auto resource = std::make_shared<Graphic>(FIRSTRESOURCECENTERPOS, filePass);
 				//配列に格納
 				resources.emplace_back(resource);
 
@@ -255,11 +290,12 @@ void UIEditor::LoadFileResource()
 				if (FileRead_findNext(FindHandle, &info) < 0)break;
 				continue;
 			}
+			//リソースがすでに一つ以上存在したら
 			else {
-				//一つ前のリソースの描画座標を取得する
+				//一つ前のリソースの描画中心座標を取得する
 				auto pos = resources.back()->pos;
-				//画像同士の間隔
-				pos.y += 110;
+				//画像の大きさと画像同士の間隔で距離を開ける
+				pos.y += DRAWSIZE + 20;
 
 				//リソースを生成する
 				auto resource = std::make_shared<Graphic>(pos, filePass);
@@ -273,6 +309,19 @@ void UIEditor::LoadFileResource()
 		FileRead_findClose(FindHandle);
 	}
 }
+//UIEditorの有効状態を切り替える関数 外部から呼ぶ
+void UIEditor::ChangeEnable()
+{
+	//有効状態で呼ばれたら無効にする
+	if (isEnable) {
+		isEnable = false;
+		makedUI.clear();
+		UIText.clear();
+		return;
+	}
+	isEnable = true;
+}
+//リソース画像選択検知関数
 bool UIEditor::CheckSelectResource()
 {
 	//マウスが左側にいなければそもそも判定しない
@@ -308,8 +357,8 @@ bool UIEditor::CheckSelectResource()
 //初回にロードする分割引き伸ばしのデフォルトUI
 void UIEditor::LoadDefaultResource()
 {
-	auto black = std::make_shared<Graphic>(tnl::Vector3(150, 100, 0), "graphics/FrameBlack.png", 48, 48);
-	auto white = std::make_shared<Graphic>(tnl::Vector3(150, 200, 0), "graphics/FrameWhite.png", 48, 48);
+	auto black = std::make_shared<Graphic>(tnl::Vector3(70, 70, 0), "graphics/FrameBlack.png", 48, 48);
+	auto white = std::make_shared<Graphic>(tnl::Vector3(70, 180, 0), "graphics/FrameWhite.png", 48, 48);
 
 	resources.emplace_back(black);
 	resources.emplace_back(white);
@@ -318,7 +367,6 @@ void UIEditor::LoadDefaultResource()
 void UIEditor::DrawResource()
 {
 	for (auto resource : resources) {
-		//DrawRotaGraph(resource->pos.x, resource->pos.y, 1, 0, resource->gh, false);
 		//どんな素材画像も100x100に縮小して描画する
 		DrawExtendGraph(resource->pos.x - DRAWSIZE / 2, resource->pos.y - DRAWSIZE / 2,
 			resource->pos.x + DRAWSIZE / 2, resource->pos.y + DRAWSIZE / 2, resource->gh, true);
@@ -444,7 +492,7 @@ bool UIEditor::ChangeSequence(SEQUENCE NextSeq)
 
 	return false;
 }
-
+//Selectシークエンスでの描画
 void UIEditor::DrawSelectSequence()
 {
 	//リソースの表示
@@ -457,13 +505,13 @@ void UIEditor::DrawSelectSequence()
 		button->Draw();
 	}
 }
-
+//Placeシークエンスでの描画
 void UIEditor::DrawPlaceSequence()
 {
 	//マウスに選択中の画像を追従させる
 	DrawRotaGraph(mouseX, mouseY, 1, 0, nowSelectGraphic->gh, true);
 }
-
+//Editシークエンスでの描画
 void UIEditor::DrawEditSequence()
 {
 	//大きさ変更中の分割画像を描画
@@ -481,7 +529,7 @@ void UIEditor::LoadUI(std::string Pass)
 	//1行目からスタート(0行目は項目名)
 	for (int i = 1; i < loadUICsv.size(); ++i) {
 		//------string型のデータをint型とfloat型に変換し、ローカル変数に保管する処理----//
-		
+
 		//type 0:分割ロード,1:そのままロード
 		int type = stoi(loadUICsv[i][2]);
 

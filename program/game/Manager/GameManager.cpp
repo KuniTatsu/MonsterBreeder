@@ -36,7 +36,7 @@ std::shared_ptr<Player>& GameManager::GetPlayer()
 
 GameManager::~GameManager()
 {
-
+	delete editor;
 }
 
 tnl::Vector3 GameManager::LocalToWorld(tnl::Vector3 LocalPos)
@@ -59,6 +59,11 @@ void GameManager::Update(const float Deltatime)
 	mouseWheel = GetMouseWheelRotVol();  //ƒzƒC[ƒ‹‚Ì‰ñ“]—ÊŽæ“¾
 
 	SceneManager::Update();
+
+	if (tnl::Input::IsKeyDownTrigger(eKeys::KB_E)) {
+		editor->ChangeEnable();
+	}
+
 	editor->Update();
 
 }
@@ -86,7 +91,9 @@ void GameManager::initGameManager()
 	editor = new UIEditor();
 
 	editor->Init();
-	editor->LoadUI("Csv/UI/SaveUI.csv");
+
+	/*editor->ChangeEnable();*/
+	//editor->LoadUI("Csv/UI/SaveUI.csv");
 
 	//debug
 	//editor->SaveUIButton();
